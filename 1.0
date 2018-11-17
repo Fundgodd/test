@@ -1,0 +1,92 @@
+import RPi.GPIO as GPIO
+from time import sleep , time
+
+ma={'.-':'a',
+    "...":"b",
+    "-.-.":"c",
+    "-..":"d",
+    ".":"e",
+    "..-.":"f",
+    "--.":"g",
+    "....":"h",
+    "..":"i",
+    ".---":"j",
+    "-.-":"k",
+    ".-..":"l",
+    "--":"m",
+    "-.":"n",
+    "---":"o",
+    ".--.":"p",
+    "--.-":"q",
+    ".-.":"r",
+    "...":"s",
+    "-":"t",
+    "..-":"u",
+    "...-":"v",
+    ".--":"w",
+    "-..-":"x",
+    "-.--":"y",
+    "--..":"z",
+    "..--..":"?",
+    "-..-.":"/",
+    ".----":"1",
+    "..---":"2",
+    "...--":"3",
+    "....-":"4",
+    ".....":"5",
+    "-....":"6",
+    "--...":"7",
+    "---..":"8",
+    "----.":"9",
+    "-----":"0"
+}
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+let=""
+word=" "
+
+def test_callback2(channel, y):
+    global let
+    print('0')
+    x= time()
+    if x-y >1.1:
+        let+="-"
+    else:
+        let+='.'
+    print(x)
+    print(y-x)
+    GPIO.remove_event_detect(12)
+    GPIO.add_event_detect(12, GPIO.RISING, callback=lambda channel,x=time(): test_callback(channel, x))
+
+def test_callback(channel, x):
+    global let
+    global word
+    print('1111111111111111')
+    y=time()
+    if x==0:
+        y=time()
+    elif y-x>3:
+        word=word +ma[let]
+        let=""
+        print(word)
+        word=""
+    else:
+        word+=ma[let]
+        let=""
+        
+    print(y)
+    GPIO.remove_event_detect(12)
+    GPIO.add_event_detect(12, GPIO.FALLING, callback=lambda channel,y=time(): test_callback2(channel, y))
+
+print('Waiting for IO12 state changes ...')
+GPIO.add_event_detect(12, GPIO.RISING, callback=lambda channel, x=0: test_callback(channel, x))
+
+try:
+    while True:
+        sleep(2)
+        print('.')
+except KeyboardInterrupt:
+    GPIO.cleanup()
+
+GPIO.cleanup()
