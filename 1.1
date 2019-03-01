@@ -1,0 +1,113 @@
+import RPi.GPIO as GPIO
+from time import sleep , time
+
+ma={'.-':'a',
+    "-...":"b",
+    "-.-.":"c",
+    "-..":"d",
+    ".":"e",
+    "..-.":"f",
+    "--.":"g",
+    "....":"h",
+    "..":"i",
+    ".---":"j",
+    "-.-":"k",
+    ".-..":"l",
+    "--":"m",
+    "-.":"n",
+    "---":"o",
+    ".--.":"p",
+    "--.-":"q",
+    ".-.":"r",
+    "...":"s",
+    "-":"t",
+    "..-":"u",
+    "...-":"v",
+    ".--":"w",
+    "-..-":"x",
+    "-.--":"y",
+    "--..":"z",
+    "..--..":"?",
+    "-..-.":"/",
+    ".----":"1",
+    "..---":"2",
+    "...--":"3",
+    "....-":"4",
+    ".....":"5",
+    "-....":"6",
+    "--...":"7",
+    "---..":"8",
+    "----.":"9",
+    "-----":"0"
+}
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+let=""
+word=" "
+c=0
+
+#Проверка длинны зажатия
+# с - узнаём здесь
+def test_callback2(channel, y):
+    global let
+    global c
+    global word
+    x= time()
+    if c==0:
+        print('Длинна точки установлена. Удачи!')
+        c=x-y
+    elif x-y >3*c:
+        let+="-"
+    else:
+        let+='.'
+    GPIO.remove_event_detect(12)
+    while True:
+        t=time()
+        if GPIO.input(12):
+            test_callback(channel,x)
+            break
+        elif (12*c<= t-x):
+            word=word +ma[let]
+            let=""
+            print(word)
+            word=""
+
+        sleep(c-0.3*c)
+#    GPIO.add_event_detect(12, GPIO.RISING, callback=lambda channel,x=time(): test_callback(channel, x))
+    
+#Пауза , пробел , конец
+def test_callback(channel, x):
+    global let
+    global word
+    global c
+    y=time()
+    if x==0 or c==0:
+        pass
+    elif y-x>12*c:
+        let=""
+    elif y-x>7*c:
+        word=word +ma[let]
+        let=""
+        print(word)
+        word=""
+    elif y-x>3*c:
+        word+=ma[let]
+        let=""
+    else:
+        y=time()
+
+    GPIO.remove_event_detect(12)
+    GPIO.add_event_detect(12, GPIO.FALLING, callback=lambda channel,y=time(): test_callback2(channel, y))
+
+GPIO.add_event_detect(12, GPIO.RISING, callback=lambda channel, x=0: test_callback(channel, x))
+
+try:
+    print('Введите длинну точки')
+    while True:
+        sleep(4)
+        
+except KeyboardInterrupt:
+    GPIO.cleanup()
+
+GPIO.cleanup()
